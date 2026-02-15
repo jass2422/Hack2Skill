@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>AI Incident Commander</title>
+    <link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<div class="page">
+    <h1>🚨 AI Incident Commander</h1>
+
+    <div class="card">
+        <textarea id="incident" placeholder="Describe the production issue..."></textarea>
+        <button onclick="analyze()">Analyze Incident</button>
+        <div id="loading" class="loading">Analyzing incident...</div>
+    </div>
+
+    <div id="result" class="result-card"></div>
+</div>
+
+<script>
+async function analyze() {
+    const description = document.getElementById("incident").value;
+    const resultDiv = document.getElementById("result");
+    const loadingDiv = document.getElementById("loading");
+
+    if (!description) {
+        alert("Please describe the incident.");
+        return;
+    }
+
+    resultDiv.style.display = "none";
+    loadingDiv.style.display = "block";
+
+    try {
+        const response = await fetch("/analyze-incident", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ description })
+        });
+
+        const data = await response.json();
+
+        loadingDiv.style.display = "none";
+        resultDiv.style.display = "block";
+
+        resultDiv.innerHTML = `
+            <div class="result-inner">
+                <div class="incident-meta">
+                    Incident ID: ${data.incident_id || "INC-" + Math.floor(Math.random()*9999)}
+                </div>
+
+                <h3>Incident</h3>
+                <p>${data.incident}</p>
+
+                <h3>Likely Root Cause</h3>
+                <p>${data.likely_root_cause}</p>
+
+                <h3>Recommended Action</h3>
+                <p>${data.recommended_action}</p>
+
+                <div class="badge">
+                    Confidence: ${data.confidence}
+                </div>
+            </div>
+        `;
+
+    } catch (err) {
+        loadingDiv.style.display = "none";
+        alert("Error connecting to server.");
+    }
+}
+</script>
+
+</body>
+</html>
